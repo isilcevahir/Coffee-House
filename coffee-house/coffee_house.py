@@ -41,29 +41,49 @@ while True:
     musteri = musteri_bul(kullanici)
 
     if musteri:
-        print(f"Hoşgeldiniz {musteri[1].capitalize()}! puanın: {musteri[2]}")
+        islem = input("Ne yapmak istersiniz? (siparis/sil): ").strip().lower()
 
-        menuyu_goster()
+        if islem == "sil":
+            onay = input(f"{musteri[1].capitalize()} adlı müşteriyi ve tüm sipariş geçmişini silmek istediğinize emin misiniz? (evet/hayır): ").strip().lower()
 
-        secim = input("Hangi kahveyi istersiniz (latte/espresso/americano/Mocha): ").strip().lower()
-        cur.execute("SELECT puan FROM menu WHERE ad = %s;", (secim,))
-        kahve = cur.fetchone()
-        if kahve:
-            puan = kahve[0]
-            cur.execute(
-                "UPDATE musteriler SET puan = puan + %s, toplam_kahve = toplam_kahve + %s WHERE id = %s;",
-                (puan, 1, musteri[0])
-                )
-            cur.execute(
-              "INSERT INTO siparisler (musteri_id, kahve_adi, puan) VALUES (%s, %s, %s);",
-              (musteri[0], secim, puan)
-              )
-            conn.commit()
-            print(f"Kahveniz hazır! toplam_kahve: {musteri[3] + 1}, Kazanılan puan: {puan}, yeni puan: {musteri[2] + puan}")
-
+            if onay == "evet":
+                cur.execute("DELETE FROM siparisler WHERE musteri_id = %s;", (musteri[0],))
+                cur.execute("DELETE FROM musteriler WHERE id = %s;", (musteri[0],))
+                conn.commit()
+                print(f"{musteri[1].capitalize()} ve tüm sipariş geçmişi silindi.")
+            else:
+                print("Silme işlemi iptal edildi.")
 
         else:
-            print("Geçersiz kahve seçimi!")
+            if musteri[2] >= 60:
+                seviye = "Gold"
+            elif musteri[2] >= 30:
+                seviye = "Silver"
+            else:
+                seviye = "Bronze"
+
+            print(f"Hoşgeldiniz {musteri[1].capitalize()}! puanın: {musteri[2]} | Seviyen: {seviye}")
+
+            menuyu_goster()
+
+            secim = input("Hangi kahveyi istersiniz (latte/espresso/americano/Mocha): ").strip().lower()
+            cur.execute("SELECT puan FROM menu WHERE ad = %s;", (secim,))
+            kahve = cur.fetchone()
+            if kahve:
+                puan = kahve[0]
+                cur.execute(
+                    "UPDATE musteriler SET puan = puan + %s, toplam_kahve = toplam_kahve + %s WHERE id = %s;",
+                    (puan, 1, musteri[0])
+                    )
+                cur.execute(
+                  "INSERT INTO siparisler (musteri_id, kahve_adi, puan) VALUES (%s, %s, %s);",
+                  (musteri[0], secim, puan)
+                  )
+                conn.commit()
+                print(f"Kahveniz hazır! toplam_kahve: {musteri[3] + 1}, Kazanılan puan: {puan}, yeni puan: {musteri[2] + puan}")
+
+            else:
+                print("Geçersiz kahve seçimi!")
 
     else:
         print("Müşteri Bulunamadı!")
